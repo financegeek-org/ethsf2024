@@ -8,7 +8,7 @@ const _litActionCode = async () => {
   console.log(temp);
 
   // only sign if the temperature is above 60. If it's below 60, exit.
-  if (false && temp < 60) {
+  if (temp < 60) {
     return;
   }
 
