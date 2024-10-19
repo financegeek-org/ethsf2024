@@ -5,12 +5,13 @@ import {
   createSiweMessageWithRecaps,
   generateAuthSig,
   LitAbility,
+  LitAccessControlConditionResource,
   LitActionResource,
   LitPKPResource,
 } from "@lit-protocol/auth-helpers";
 
 import { getEnv } from "./utils.js";
-import { litActionCode } from "./litAction.js";
+import { litActionCode } from "./litAction2.js";
 
 const ETHEREUM_PRIVATE_KEY = getEnv("ETHEREUM_PRIVATE_KEY");
 
@@ -46,6 +47,10 @@ export const runExample = async (pkpPublicKey) => {
           resource: new LitActionResource("*"),
           ability: LitAbility.LitActionExecution,
         },
+        {
+          resource: new LitAccessControlConditionResource("*"),
+          ability: LitAbility.AccessControlConditionDecryption,
+        },
       ],
       authNeededCallback: async ({
         resourceAbilityRequests,
@@ -68,6 +73,26 @@ export const runExample = async (pkpPublicKey) => {
       },
     });
     console.log("✅ Got Session Signatures");
+
+    console.log("🔄 Executing Encrypt Actions...");
+    const { ciphertextData, dataToEncryptHashData } = await LitJsSdk.encryptString(
+      {
+        accessControlConditions,
+        sessionSigs: {}, // your session
+        chain,
+        dataToEncrypt: getEnv("DATA_API_KEY"),
+      },
+      client
+    );
+    const { ciphertextInf, dataToEncryptHashInf } = await LitJsSdk.encryptString(
+      {
+        accessControlConditions,
+        sessionSigs: {}, // your session
+        chain,
+        dataToEncrypt: getEnv("INF_API_KEY"),
+      },
+      client
+    );
 
     console.log("🔄 Executing Lit Action...");
     const message = new Uint8Array(
