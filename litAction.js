@@ -9,7 +9,7 @@ const _litActionCode = async () => {
 
   // only sign if the temperature is above 60. If it's below 60, exit.
   if (temp < 60) {
-    return;
+    //return;
   }
 
   // this requests a signature share from the Lit Node
