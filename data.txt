@@ -1,0 +1,7 @@
+Jeff works as Software Engineer at Apple.
+John works as Software Engineer at Facebook.
+Steve works as Sales at Facebook.
+Ivan works as Sales at Apple.
+Zhang works as Software Engineer at Facebook.
+Chen works as Software Engineer at Facebook.
+Zhao works as Software Engineer at Facebook.
