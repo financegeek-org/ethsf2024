@@ -14,7 +14,7 @@ import { getChainInfo, getEnv } from "./utils";
 import { litActionCode } from "./litAction";
 
 const ETHEREUM_PRIVATE_KEY = getEnv("ETHEREUM_PRIVATE_KEY");
-const LIT_NETWORK = LitNetwork.Datil;
+const LIT_NETWORK = LitNetwork.DatilDev;
 const LIT_CAPACITY_CREDIT_TOKEN_ID = getEnv("LIT_CAPACITY_CREDIT_TOKEN_ID");
 const LIT_PKP_PUBLIC_KEY = getEnv("LIT_PKP_PUBLIC_KEY");
 const CHAIN_TO_SEND_TX_ON = "hederaTestnet";
@@ -121,6 +121,8 @@ export const signAndCombineAndSendTx = async () => {
     );
     console.log("✅ Transaction created and serialized");
 
+/*
+
     let capacityTokenId = LIT_CAPACITY_CREDIT_TOKEN_ID;
     if (capacityTokenId === "" || capacityTokenId === undefined) {
       console.log("🔄 No Capacity Credit provided, minting a new one...");
@@ -146,12 +148,12 @@ export const signAndCombineAndSendTx = async () => {
         uses: "1",
       });
     console.log("✅ Capacity Delegation Auth Sig created");
-
+*/
     console.log("🔄 Attempting to execute the Lit Action code...");
     const result = await litNodeClient.executeJs({
       sessionSigs: await litNodeClient.getSessionSigs({
         chain: CHAIN_TO_SEND_TX_ON,
-        capabilityAuthSigs: [capacityDelegationAuthSig],
+        //capabilityAuthSigs: [capacityDelegationAuthSig],
         expiration: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), // 24 hours
         resourceAbilityRequests: [
           {
