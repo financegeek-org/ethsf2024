@@ -1,5 +1,5 @@
 import ethers from "ethers";
-import { LitNodeClient } from "@lit-protocol/lit-node-client";
+import { LitNodeClient, encryptString } from "@lit-protocol/lit-node-client";
 import { LIT_RPC, LitNetwork } from "@lit-protocol/constants";
 import {
   createSiweMessageWithRecaps,
@@ -15,6 +15,23 @@ import { litActionCode } from "./litAction2.js";
 
 const ETHEREUM_PRIVATE_KEY = getEnv("ETHEREUM_PRIVATE_KEY");
 
+// lit action will allow anyone to decrypt this api key with a valid authSig
+const chain = 'ethereum';
+const accessControlConditions = [
+  {
+    contractAddress: '',
+    standardContractType: '',
+    chain,
+    method: 'eth_getBalance',
+    parameters: [':userAddress', 'latest'],
+    returnValueTest: {
+      comparator: '>=',
+      value: '0',
+    },
+  },
+];
+
+
 export const runExample = async (pkpPublicKey) => {
   let litNodeClient;
 
@@ -29,7 +46,7 @@ export const runExample = async (pkpPublicKey) => {
     console.log("🔄 Connecting to Lit network...");
     litNodeClient = new LitNodeClient({
       litNetwork: LitNetwork.DatilDev,
-      debug: false,
+      debug: true,
     });
     await litNodeClient.connect();
     console.log("✅ Connected to Lit network");
@@ -75,36 +92,46 @@ export const runExample = async (pkpPublicKey) => {
     console.log("✅ Got Session Signatures");
 
     console.log("🔄 Executing Encrypt Actions...");
-    const { ciphertextData, dataToEncryptHashData } = await LitJsSdk.encryptString(
+    const { ciphertext: ciphertextData, dataToEncryptHash: dataToEncryptHashData } = await encryptString(
       {
         accessControlConditions,
-        sessionSigs: {}, // your session
+        // sessionSigs, // your session
         chain,
         dataToEncrypt: getEnv("DATA_API_KEY"),
       },
-      client
+      litNodeClient
     );
-    const { ciphertextInf, dataToEncryptHashInf } = await LitJsSdk.encryptString(
+    const { ciphertext: ciphertextInf, dataToEncryptHash: dataToEncryptHashInf } = await encryptString(
       {
         accessControlConditions,
-        sessionSigs: {}, // your session
+        // sessionSigs, // your session
         chain,
         dataToEncrypt: getEnv("INF_API_KEY"),
       },
-      client
+      litNodeClient
     );
+    console.log("ciperTextData 2",ciphertextData);
+    console.log("ciperTextInf 2",ciphertextInf);
 
+    const q="Who works at Facebook?";
     console.log("🔄 Executing Lit Action...");
     const message = new Uint8Array(
       await crypto.subtle.digest(
         "SHA-256",
-        new TextEncoder().encode("Hello world")
+        new TextEncoder().encode(q)
       )
     );
     const litActionSignatures = await litNodeClient.executeJs({
       sessionSigs,
       code: litActionCode,
+      targetNodeRange: 1,
       jsParams: {
+        accessControlConditions,
+        ciphertextData,
+        dataToEncryptHashData,
+        ciphertextInf,
+        dataToEncryptHashInf,
+        query: q,
         toSign: message,
         publicKey: pkpPublicKey,
         sigName: "sig",

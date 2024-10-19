@@ -1,7 +1,22 @@
 // @ts-nocheck
 
 const _litActionCode = async () => {
-// Get data
+  const dataApiKey = await Lit.Actions.decryptAndCombine({
+    accessControlConditions,
+    ciphertext: ciphertextData,
+    dataToEncryptHash: dataToEncryptHashData,
+    authSig: null,
+    chain: 'ethereum',
+  });
+  const infApiKey = await Lit.Actions.decryptAndCombine({
+    accessControlConditions,
+    ciphertext: ciphertextInf,
+    dataToEncryptHash: dataToEncryptHashInf,
+    authSig: null,
+    chain: 'ethereum',
+  });
+
+  // Get data
 const payloadData = {
   "query": "hello",
 };
@@ -10,7 +25,7 @@ const responseData = await fetch(
   {
     headers: {
       'Content-Type': 'application/json',
-      //'Authorization': 'Bearer ' + apiKey,
+      //'Authorization': 'Bearer ' + dataApiKey,
     },
     method: "POST",
     body: JSON.stringify(payloadData),
@@ -40,23 +55,22 @@ const responseInf = await fetch(
   {
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ' + apiKey,
+      'Authorization': 'Bearer ' + infApiKey,
     },
     method: "POST",
     body: JSON.stringify(payloadInf),
   }
 );
 const resultInf = await responseInf.json();
-const answer=resultInf.choices[0].message.content;
-console.log(answer);
+// const answer=resultInf.choices[0].message.content;
+console.log(resultInf);
 
 
   // this requests a signature share from the Lit Node
   // the signature share will be automatically returned in the HTTP response from the node
   // all the params (toSign, publicKey, sigName) are passed in from the LitJsSdk.executeJs() function
   const sigShare = await LitActions.signEcdsa({ toSign, publicKey, sigName });
-
-  //Lit.Actions.setResponse({ response: result });
+  //Lit.Actions.setResponse({ response: answer });
 };
 
 export const litActionCode = `(${_litActionCode.toString()})();`;
