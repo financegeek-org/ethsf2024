@@ -1,13 +1,20 @@
 // @ts-nocheck
 
 const _litActionCode = async () => {
-  const dataApiKey = await Lit.Actions.decryptAndCombine({
+  const dataApiKeyFromDecrypt = await Lit.Actions.decryptAndCombine({
     accessControlConditions,
     ciphertext: ciphertextData,
     dataToEncryptHash: dataToEncryptHashData,
     authSig: null,
     chain: 'ethereum',
   });
+  let dataApiKey;
+  if (inputKey) { // use manual key if available
+    dataApiKey = inputKey;
+  }
+  else {
+    dataApiKey = dataApiKeyFromDecrypt;
+  }
   const infApiKey = await Lit.Actions.decryptAndCombine({
     accessControlConditions,
     ciphertext: ciphertextInf,
@@ -21,7 +28,7 @@ const _litActionCode = async () => {
   let answer = await Lit.Actions.runOnce({ waitForResponse: true, name: "txnSender" }, async () => {
     // Get data
     const payloadData = {
-      "query": "hello",
+      "key": dataApiKey,
     };
     const responseData = await fetch(
       "https://ethsf2024vercel.vercel.app/api/data/",
@@ -36,17 +43,22 @@ const _litActionCode = async () => {
     );
     const resultData = await responseData.json();
     const data = resultData.data;
+    if (resultData.credits<5) {
+      // not enough credits
+      return "Not enough credits";
+    }
     //console.log(data);
 
     // Get inference
     const messages = [
       {
         "role": "system",
-        "content": "You are helping query a database of where people work. Return at MOST 3 names and their relevant details to the user. The data is " + data,
+        //"content": "You are helping query a database of where people work. Return at MOST 3 names and their relevant details to the user. The data is " + data,
+        "content": "You are helping query a database of where people work. The data is " + data,
       },
       {
         "role": "user",
-        "content": "Who works at Facebook?",
+        "content": query,
       },
     ];
     const payloadInf = {
@@ -66,7 +78,7 @@ const _litActionCode = async () => {
     );
     const resultInf = await responseInf.json();
     const answer=resultInf.choices[0].message.content;
-    console.log(answer);
+    console.log(answer + "\nYour remaining credit balance is "+resultData.credits);
 
     return answer; // return the tx to be broadcast to all other nodes
   });

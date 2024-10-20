@@ -9,9 +9,15 @@ import {
   LitActionResource,
   LitPKPResource,
 } from "@lit-protocol/auth-helpers";
+import { createInterface } from 'node:readline/promises';
 
 import { getEnv } from "./utils.js";
 import { litActionCode } from "./litAction2.js";
+
+const rl = createInterface({
+  input: process.stdin,
+  output: process.stdout,
+});
 
 const ETHEREUM_PRIVATE_KEY = getEnv("ETHEREUM_PRIVATE_KEY");
 
@@ -46,7 +52,7 @@ export const runExample = async (pkpPublicKey) => {
     console.log("🔄 Connecting to Lit network...");
     litNodeClient = new LitNodeClient({
       litNetwork: LitNetwork.DatilDev,
-      debug: true,
+      debug: false,
     });
     await litNodeClient.connect();
     console.log("✅ Connected to Lit network");
@@ -110,36 +116,37 @@ export const runExample = async (pkpPublicKey) => {
       },
       litNodeClient
     );
-    console.log("ciperTextData 2",ciphertextData);
-    console.log("ciperTextInf 2",ciphertextInf);
+    const inputKey = await rl.question("Input data key (blank to use decrypted): ");
+    while (true) {
+      const inputQuery = await rl.question("Input query: ");
 
-    const q="Who works at Facebook?";
-    console.log("🔄 Executing Lit Action...");
-    const message = new Uint8Array(
-      await crypto.subtle.digest(
-        "SHA-256",
-        new TextEncoder().encode(q)
-      )
-    );
-    const litActionSignatures = await litNodeClient.executeJs({
-      sessionSigs,
-      code: litActionCode,
-      targetNodeRange: 1,
-      jsParams: {
-        accessControlConditions,
-        ciphertextData,
-        dataToEncryptHashData,
-        ciphertextInf,
-        dataToEncryptHashInf,
-        query: q,
-        toSign: message,
-        publicKey: pkpPublicKey,
-        sigName: "sig",
-      },
-    });
-    console.log("✅ Executed Lit Action");
-
-    return litActionSignatures;
+      console.log("🔄 Executing Lit Action...");
+      const message = new Uint8Array(
+        await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(inputQuery)
+        )
+      );
+      const litActionSignatures = await litNodeClient.executeJs({
+        sessionSigs,
+        code: litActionCode,
+        targetNodeRange: 1,
+        jsParams: {
+          accessControlConditions,
+          ciphertextData,
+          dataToEncryptHashData,
+          ciphertextInf,
+          dataToEncryptHashInf,
+          inputKey,
+          query: inputQuery,
+          toSign: message,
+          publicKey: pkpPublicKey,
+          sigName: "sig",
+        },
+      });
+      console.log("✅ Executed Lit Action");
+      console.log("Signatures", litActionSignatures);
+    }
   } catch (error) {
     console.error(error);
   } finally {
